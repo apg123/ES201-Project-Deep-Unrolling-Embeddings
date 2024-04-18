@@ -1,0 +1,11 @@
+## TODO ##
+
+Download MSCOCO
+Embed all MSCOCO images (seperate train/test)
+-- Normalize these like SpLiCE
+Build/Modify Unrolling Architecture
+Try unrolling with set dictionary (compare to SpLICE)
+Set up training infrastructure
+train
+Write tests of learned dictionary
+Decide on manipulations of learned dictionary
