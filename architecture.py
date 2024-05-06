@@ -18,12 +18,14 @@ class SparseDeepUnrolling(nn.Module):
 
         
         self.lam = kwargs.get('lam', 0.12)
-        self.step = kwargs.get('step', 0.1)
-
         if W is None:
-            self.W = F.normalize(nn.Parameter(torch.randn((self.D, self.P), device=self.device)), p=2, dim=0)
+            W = F.normalize(torch.randn((self.D, self.P), device=self.device), p=2, dim=0)
         else:
-            self.W = F.normalize(nn.Parameter(W.to(self.device)), p=2, dim=0)
+            W = F.normalize(W.to(self.device), p=2, dim=0)
+
+        self.register_parameter('W', nn.Parameter(W))
+        self.register_buffer("step", torch.tensor(kwargs.get('step', .1)))
+        self.relu = nn.ReLU()
 
     def normalize(self):
         self.W.data = F.normalize(self.W.data, p=2, dim=0)
@@ -35,11 +37,11 @@ class SparseDeepUnrolling(nn.Module):
         x = x.to(self.device)
         batch_size = x.shape[0]
         zhat = torch.zeros((batch_size, self.P, 1), device=self.device)
-        IplusWTW = torch.eye(self.P, device=self.device) - self.step * torch.matmul(torch.t(self.W), self.W)
-        WTx = self.step * torch.matmul(torch.t(self.W), x)
+        IplusWTW = torch.eye(self.P, device=self.device) - self.step * torch.matmul(self.W.T, self.W)
+        WTx = self.step * torch.matmul(self.W.T, x)
         #print(IplusWTW.shape, zhat.shape, WTx.shape)
         for _ in range(self.T):
-            zhat = F.relu(torch.matmul(IplusWTW, zhat) + WTx - self.lam * self.step)
+            zhat = self.relu(torch.matmul(IplusWTW, zhat) + WTx - self.lam * self.step)
 
         xhat = torch.matmul(self.W, zhat)
 
